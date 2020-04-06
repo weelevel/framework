@@ -1,0 +1,22 @@
+{
+    "name": "weelevel/framework",
+    "description": "the new WeeLevel framework",
+    "type": "project",
+    "keywords": [
+        "WeeLevel",
+        "framework"
+    ],
+    "homepage": "http://yanghuangsheng.cn/",
+    "license": "Apache-2.0",
+    "authors": [
+        {
+            "name": "yanghuangsheng",
+            "email": "260287826@qq.com"
+        }
+    ],
+    "require": {
+        "psr-4": {
+            "level\\": "system/level/"
+        }
+    }
+}
