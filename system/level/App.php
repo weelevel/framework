@@ -11,10 +11,11 @@
 
 namespace level;
 
-
 class App {
+
     public function show()
     {
-        return 'the app show';
+        $this->name = '2121';
+        echo 'the app show';
     }
 }
