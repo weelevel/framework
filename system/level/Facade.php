@@ -21,41 +21,26 @@ class Facade {
     protected static $facadeName = '';
 
     /**
-     * 对像实例树
-     * @var array
-     */
-    protected static $bind = [];
-
-    /**
      * 始终创建新对像实例
      * @var bool
      */
     protected static $newInstance;
 
     /**
-     * 绑定类
-     * @param $name
-     * @param $class
+     * 创建Facade实例
+     * @param string $class
+     * @param array $params
+     * @param bool $newInstance
+     * @return mixed|void
      */
-    protected static function bind($name, $class)
-    {
-        //多个
-        if (is_array($name)) {
-            self::$bind = array_merge(self::$bind, $name);
-        }
-        //单个
-        self::$bind[$name] = $class;
-    }
-
     protected static function createFacade($class = '', $params = [], $newInstance = false)
     {
         //为空则获取当前绑定的类名
         $class = $class ?: static::class;
+
         //存在继承
         if (static::$facadeName) {
             $class = static::$facadeName;
-        } elseif (isset(self::$bind[$class])){
-            $class = self::$bind[$class];
         }
 
         if (static::$newInstance) {
