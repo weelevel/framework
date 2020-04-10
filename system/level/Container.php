@@ -11,6 +11,7 @@
 
 namespace level;
 
+use Closure;
 use ReflectionClass;
 use ReflectionFunctionAbstract;
 
@@ -33,7 +34,7 @@ class Container {
      * 类库标识树
      * @var array
      */
-    protected static $classList = [];
+    protected $classList = [];
 
     /**
      * 实例容器
@@ -49,22 +50,67 @@ class Container {
     }
 
     /**
-     * 绑定一个类
-     * @param $abstract
-     * @param $concrete
+     * 绑定一个类标识
+     * @param $abstract 名字
+     * @param $concrete 类、闭包、对象
+     * @return $this
      */
-    protected static function bindClass($abstract, $concrete)
+    public function bindClass($abstract, $concrete)
     {
         if (is_array($abstract)){
+            //批量绑定
+            foreach ($abstract as $key => $value) {
+                $this->bindClass($key, $value);
+            }
+        } elseif ($concrete instanceof Closure) {
+            //闭包
+            $this->classList[$abstract] = $concrete;
+        } elseif (is_object($concrete)) {
+            //对象实例
+            $this->instance($abstract, $concrete);
+        } else {
 
+            $this->classList[$abstract] = $concrete;
         }
+
+        return $this;
     }
 
     /**
-     *
-     * @param $className
-     * @param array $params
-     * @param bool $newInstance
+     * 绑定实例
+     * @param $abstract 类名字
+     * @param $instance 对象
+     * @return $this
+     */
+    public function instance($abstract, $instance)
+    {
+        $this->instanceList[$abstract] = $instance;
+
+        return $this;
+    }
+
+    /**
+     * 获取实例
+     * @param $abstract
+     * @return mixed|object
+     * @throws Exception
+     */
+    public function name($abstract)
+    {
+        if(isset($this->classList[$abstract]) || isset($this->instanceList[$abstract])) {
+            return $this->make($abstract);
+        }
+
+        throw new Exception('class not exists: ' . $abstract);
+    }
+
+    /**
+     * 返回类的实例
+     * @param $className 类名
+     * @param array $params 参数
+     * @param bool $newInstance 不缓存到实例树
+     * @return mixed|object
+     * @throws \Exception
      */
     public function make($className, array $params = [], $newInstance = false)
     {
@@ -83,21 +129,23 @@ class Container {
 
     }
 
+    /**
+     * 创建对象
+     * @param $class 类名
+     * @param array $params 参数
+     * @return object
+     * @throws Exception
+     */
     public function invokeClass($class, $params = [])
     {
-        //$class = App::class;
         try {
             $reflect = new ReflectionClass($class);
-        }  catch (\Exception $e) {
-            throw new \Exception('class not exists: ' . $class);
+        }  catch (Exception $e) {
+            throw new Exception('class not exists: ' . $class);
         }
 
-
-        var_dump($reflect);
         //获取构造方法
         $constructor = $reflect->getConstructor();
-        var_dump($constructor);
-        //var_dump($reflect->getNumberOfParameters());
         $params = $constructor ? $this->bindParams($constructor, $params) : [];
 
         $object = $reflect->newInstanceArgs($params);
@@ -105,30 +153,71 @@ class Container {
         return $object;
     }
 
+    /**
+     * 参数绑定
+     * @param ReflectionFunctionAbstract $reflect 反射方法
+     * @param array $params 参数
+     * @return array
+     * @throws Exception
+     */
     public function bindParams(ReflectionFunctionAbstract $reflect, array $params)
     {
-        echo 'getNumberOfParameters<br>';
-        var_dump($reflect->getNumberOfParameters());
-
-
+        //初始化返回参数
+        $result = [];
+        //不存在参数
+        if ($reflect->getNumberOfParameters() == 0) {
+            return $result;
+        }
+        //重置指针开始位置
         reset($params);
         $type   = key($params) === 0 ? 1 : 0;
-
-        echo 'type<br>';
-        var_dump($type);
-
-
-        echo 'getParameters<br>';
+        //获取方法参数
         $paramsList= $reflect->getParameters();
-        var_dump($paramsList);
-
         foreach ($paramsList as $param) {
             $name = $param->getName();
+            $class = $param->getClass();
 
+            if ($class) {
+                //类
+                $result[] = $this->getObjectParam($class->getName(), $params);
+            } elseif ($type == 1 && !empty($params)) {
+                //有序
+                $result[] = array_shift($params);
+            } elseif ($type == 0 && isset($params[$name])) {
+                //没序 key => $value
+                $result[] = $params[$name];
+            } elseif ($param->isDefaultValueAvailable()) {
+                //带默认值的
+                $result[] = $param->getDefaultValue();
+            } else {
+                //缺失参数
+                throw new Exception('method param miss: ' . $name);
+            }
         }
 
+        return $result;
+    }
 
-        return [];
+    /**
+     * 处理类、对象的参数
+     * @param string $className 类名
+     * @param array $params 参数
+     * @return string|mixed|object
+     * @throws Exception
+     */
+    protected function getObjectParam(string $className, array &$params)
+    {
+        $array = $params;
+        $value = array_shift($array);
+
+        if ($value instanceof $className) {
+            $result = $value;
+            array_shift($params);
+        } else {
+            $result = $this->make($className);
+        }
+
+        return $result;
     }
 
     /**

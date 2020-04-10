@@ -31,7 +31,8 @@ class Facade {
      * @param string $class
      * @param array $params
      * @param bool $newInstance
-     * @return mixed|void
+     * @return mixed|object
+     * @throws \Exception
      */
     protected static function createFacade($class = '', $params = [], $newInstance = false)
     {
@@ -51,13 +52,45 @@ class Facade {
     }
 
     /**
+     * 拆分参数
+     * @param $params 参数
+     * @param string $keyName 有构造参数标识
+     * @return array
+     */
+    protected static function divideParams($params, $keyName = 'init')
+    {
+        //初始新参数
+        $newParams = [];
+        //提取构造参数
+        if (isset($params[0]) && $params[0] == $keyName) {
+            array_shift($params);
+            $initParams = array_shift($params);
+            //参数为数组
+            if (is_array($initParams)) {
+                $newParams[] = $initParams;
+            } else {
+                $newParams[][] = $initParams;
+            }
+        } else {
+            $newParams[] = [];
+        }
+        //方法参数
+        $newParams[] = $params;
+
+        return $newParams;
+    }
+
+    /**
      * 调用实际类方法
      * @param $method
      * @param $params
      * @return mixed
+     * @throws \Exception
      */
     public static function __callStatic($method, $params)
     {
-        return call_user_func_array([static::createFacade(), $method], $params);
+        list($init, $params) = static::divideParams($params);
+
+        return call_user_func_array([static::createFacade('', $init), $method], $params);
     }
 }
