@@ -90,7 +90,6 @@ class Facade {
     public static function __callStatic($method, $params)
     {
         list($init, $params) = static::divideParams($params);
-
         return call_user_func_array([static::createFacade('', $init), $method], $params);
     }
 }
