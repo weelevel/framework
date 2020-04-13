@@ -28,6 +28,7 @@ trait RuleMapping {
         foreach ($ruleList as $key => $value) {
             if ($var = $this->match($value)) {
                 var_dump($var);
+                break;
             }else{
                 var_dump($var);
             }
@@ -78,7 +79,6 @@ trait RuleMapping {
             }
         }
 
-        var_dump($var);
         return $var;
 
     }
@@ -124,7 +124,7 @@ trait RuleMapping {
     public function nameRegex($name, $pattern)
     {
         $optional = '';
-        $nameRule = 'w+';
+        $nameRule = '\w+';
         if ( '/' == $slash = substr($name, 0, 1)) {
             $prefix = '\\' . $slash;
             $name = substr($name, 1);
