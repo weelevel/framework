@@ -32,7 +32,6 @@ trait RuleItem {
         ];
 
         return $item;
-
     }
 
     /**

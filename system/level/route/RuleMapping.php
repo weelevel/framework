@@ -20,20 +20,46 @@ trait RuleMapping {
      */
     protected $url;
 
+    /**
+     * 匹配路由
+     * @param $url
+     * @param $method
+     * @return bool|mixed
+     */
     public function seekMap($url, $method)
     {
         $this->url = $url;
         $ruleList = $this->ruleList[$method];
 
         foreach ($ruleList as $key => $value) {
-            if ($var = $this->match($value)) {
-                var_dump($var);
+            if ( false !== $var = $this->match($value)) {
+                $route = $this->pregVar($var, $value);
                 break;
-            }else{
-                var_dump($var);
             }
         }
+        return isset($route) ? $route : false;
     }
+
+    /**
+     * 匹配参数到路由
+     * @param $var
+     * @param $item
+     * @return mixed
+     */
+    public function pregVar($var, $item)
+    {
+        foreach ($var as $key => $value) {
+            $node = ":$key";
+            if (false !== strpos($item['route'], $node)) {
+                $item['route'] = str_replace($node, $value, $item['route']);
+                unset($var[$key]);
+            }
+        }
+        $item['option'] = array_merge($item['option'], $var);
+
+        return $item;
+    }
+
 
     /**
      * URL和规则路由是否匹配

@@ -14,11 +14,12 @@ namespace level;
 use Exception;
 use level\route\RuleItem;
 use level\route\RuleMapping;
+use level\route\Dispatch;
 
 
 class Route {
 
-    use RuleItem, RuleMapping;
+    use RuleItem, RuleMapping, Dispatch;
     /**
      * 规则树
      * @var array

@@ -14,11 +14,12 @@
         }
     ],
     "require": {
-
+         "doctrine/orm": "^3.0@dev"
     },
     "autoload": {
         "psr-4": {
-            "level\\": "system/level/"
+            "level\\": "system/level/",
+            "my\\": "src/"
         }
     },
     "minimum-stability": "dev"
